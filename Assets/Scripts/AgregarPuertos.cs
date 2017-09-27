@@ -140,13 +140,16 @@ public class AgregarPuertos : MonoBehaviour {
         if(sp.IsOpen == true)
         {
             try
-            {                          
+            {
                 Leido2 = sp.ReadChar();
-                
+
+
                 //CaracterLeido = Convert.ToChar(Leido2);
 
                 Lectura = Lectura + Convert.ToChar(Leido2);
+
                 Debug.Log("Lectura " + Lectura);
+                Debug.Log("Caracter Leido " + Leido2);
 
                                
 
