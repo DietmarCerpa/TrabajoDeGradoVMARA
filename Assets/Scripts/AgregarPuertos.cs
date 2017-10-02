@@ -8,27 +8,36 @@ using System;
 public class AgregarPuertos : MonoBehaviour {
 
 
-    #region INICIO DEFINICION DE VARIABLES
+    #region INICIO DEFINICION DE VARIABLES (REVISAR CUALES DEBEN ESTAR Y CUALES NO)
 
     public Dropdown puertos;
-    public Text Mensaje;
+    public Text Mensaje, Conect;
     public Button ConectarPuerto;
-    public Text Conect;
-    public string mens = "Seleccione el puerto USB";
-    string[] ports;
-    int Estado = 0 ;
-    //byte[] DatoLeido;
-    public string Leido = "";
-    public int Leido2;
+
+    string[] ports, Buffer2;
+    public int Estado = 0, Leido2, Cantidad, nivel = 0;
+    public string mens = "Seleccione el puerto USB" , Leido = "" , Lectura = "", Prueba2;
     public char CaracterLeido;
-    public string Lectura = "";
-    public int Cantidad;
-    string Prueba2;
-    string[] Buffer2;
-    int nivel = 0;
+
     SerialPort sp = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);// Refrence to serialPort 
 
     #endregion FIN DEFINICION DE VARIABLES
+
+    #region INICIO VARIABLES DE PRUEBA
+
+    int DecimalLeido, CuantosON = 0, CuantosOFF = 0;
+    bool EnTrama = false;
+    char DecimalACaracter;
+    string DecimalACadena;
+    //char InicioTrama = 'O', Indice1 = 'F', Indice2 = 'N', FinTrama = '$';
+
+    string InicioTrama = "O", Indice1 = "F", Indice2 = "N", FinTrama = "$";
+
+    string[] CadenaDeDatos = new string[100];
+    int IndiceCadenaDeDatos = 0;
+
+
+    #endregion FIN VARIABLES DE PRUEBA
 
     void Start()
     {
@@ -37,6 +46,7 @@ public class AgregarPuertos : MonoBehaviour {
         sp.ReadTimeout = 1; //de no encontrar nada que leer solo espera 1 ms
         
         LlenarPuertos();
+
         //puertos.options.Add(new Dropdown.OptionData() { text= "Puertos Disponibles" });
         //StartCoroutine(Espera());
         //StartCoroutine(Prueba());
@@ -48,25 +58,87 @@ public class AgregarPuertos : MonoBehaviour {
         {
             try
             {
+                DecimalLeido = sp.ReadChar(); //lectura de dato recibido en forma Decimal
 
-                int DecimalLeido = sp.ReadChar(); //lectura de dato recibido en forma Decimal
+                DecimalACadena = Convert.ToString(Convert.ToChar(DecimalLeido)); // conversion del dato de int a str
 
-                char LeidoACaracter = Convert.ToChar(Leido2); //conversion del dato de int a chr
+                if (DecimalACadena == "O")
+                {
+                    EnTrama = true;
+                }
+                else if (DecimalACadena == "$")
+                {
+                    EnTrama = false;
+                }
 
-                string DecimalACadena = Convert.ToString(Leido2); // conversion del dato de int a str
+                if (EnTrama == true)
+                {
+                    if(DecimalACadena != "O")
+                    {
+                        CadenaDeDatos[IndiceCadenaDeDatos] = DecimalACadena;
+                        IndiceCadenaDeDatos++;
+                    }
+                    /*
+                    if (Indice1 == DecimalACadena)
+                    {
+                        CuantosOFF++;
+                        Debug.Log(CuantosOFF);
+                    }
+                    else if (Indice2 == DecimalACadena)
+                    {
+                        CuantosON++;
+                        Debug.Log(CuantosON);
+                    }
+                    */
+                }
+                else if (EnTrama == false)
+                {
+                    Debug.Log("Final trama");
+
+                    AnalizarTrama(CadenaDeDatos);
+
+                    CadenaDeDatos.Initialize();
+                    
+                    IndiceCadenaDeDatos = 0;
+                    
+                }
+                
 
 
 
             }
             catch (Exception Mensaje)
             {
-                //Debug.Log(Mensaje);
+                Debug.Log(Mensaje);
             }
         }
     }
 
 
     #region Inicio Area de Funciones y Procedimientos
+    /// <summary>
+    /// En esta funcion estan las acciones correspondientes a la verificacion de los datos recibidos 
+    /// por enlace SERIAL a traves del Puerto COMX
+    /// </summary>
+    private void AnalizarTrama(string[] CadenaDeDatosRecibidos )
+    {
+        if (CadenaDeDatosRecibidos[0] == "F")
+        {
+            CuantosOFF++;
+            Debug.Log(CuantosOFF);
+            if (CadenaDeDatosRecibidos[1] == "F")
+            {
+                Debug.Log("TRAMA OFF RECIBIDA:  " + CuantosOFF + "  VECES");
+            }
+        }
+        else if (CadenaDeDatosRecibidos[0] == "N")
+        {
+            CuantosON++;
+            Debug.Log("TRAMA ON RECIBIDA:  " + CuantosON + "  VECES");
+        }
+    } 
+
+
     /// <summary>
     /// Esta funcion permite llenar el "DROPDOWN" con los puertos SERIALES (COM) disponibles
     /// </summary>
